@@ -1,0 +1,42 @@
+#!/bin/bash
+
+SOURCE_DIR=$1
+DEST_DIR=$2
+COMPRESS=$3
+
+if ! command -v exiftool &> /dev/null; then
+    echo "Error: exiftool not found. Please install it." >&2
+    exit 1
+fi
+
+if [[ -z "$SOURCE_DIR" || -z "$DEST_DIR" ]]; then
+    echo "Usage: $0 <source_dir> <destination_dir> [--compress]"
+    exit 1
+fi
+
+mkdir -p "$DEST_DIR"
+
+for file in "$SOURCE_DIR"/*.{jpg,JPG,png,PNG,jpeg,JPEG}; do
+    [[ ! -f "$file" ]] && continue
+    DATE=$(exiftool -DateTimeOriginal -d "%Y/%m" "$file" | awk -F': ' '{print $2}')
+    
+    if [[ -z "$DATE" ]]; then
+        DATE=$(date -r "$file" "+%Y/%m")
+    fi
+
+    YEAR=$(echo "$DATE" | cut -d'/' -f1)
+    MONTH=$(echo "$DATE" | cut -d'/' -f2)
+    DEST_PATH="$DEST_DIR/$YEAR/$MONTH"
+
+    mkdir -p "$DEST_PATH"
+
+    BASENAME=$(basename "$file")
+    cp -n "$file" "$DEST_PATH/$BASENAME" || cp "$file" "$DEST_PATH/${BASENAME%.*}_$(date +%s).${BASENAME##*.}"
+done
+
+if [[ "$COMPRESS" == "--compress" ]]; then
+    tar -czf "${DEST_DIR%/}_backup_$(date +%Y%m%d).tar.gz" "$DEST_DIR"
+    echo "Backup compressed."
+fi
+
+echo "Backup and organization complete."
