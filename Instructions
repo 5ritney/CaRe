@@ -1,0 +1,8 @@
+# Step 1: Give execution permissions
+chmod +x 12345678_script.sh
+
+# Step 2: Run the script (basic)
+./12345678_script.sh photos/ backup/
+
+# Optional: Run with compression enabled
+./12345678_script.sh photos/ backup/ --compress
